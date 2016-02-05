@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<!--
+The MIT License (MIT)
+
+Copyright (c) 2016 Maheswaran Moothiringode
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+https://opensource.org/licenses/MIT
+-->
+<html ng-app="int_comp">
+    <head>
+        <title>Interest Compare | Maheswaran Moothiringode</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.9/angular.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/1.1.2/ui-bootstrap-tpls.min.js"></script>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-chart.js/0.8.8/angular-chart.min.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/angular-chart.js/0.8.8/angular-chart.min.css" />
+
+        <link rel="stylesheet" href="css/style.css" />
+        <script src="scripts/app.js"></script>
+
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <div ng-controller="interestController as interest">
+            
+            <div class="header">Interest Comparison</div>
+            
+            <div class="config">
+            
+                <div>Principal Amount :  <input type="text" ng-model="interest.amount"/></div>
+
+                <div class="row">
+                    <div class="col-lg-1">US</div>
+                    <div class="col-lg-3">Interest Percentage : <input type="text" value="1" ng-change="interest.recalculate();" ng-model="interest.percentage_one"/></div>
+                    <div class="col-lg-3">Type of Interest : 
+                        <input type="radio" value="1" ng-change="interest.recalculate();"  ng-model="interest.type_one"/> Simple
+                        <input type="radio" value="2" ng-change="interest.recalculate();"  ng-model="interest.type_one"/> Compound
+                    </div>
+                    <div class="col-lg-3">
+                        <div ng-show="interest.type_one === '2'">Compound frequency : 
+                            <select ng-change="interest.recalculate();"  ng-model="interest.frequency_one" ng-options="f.value as f.name for f in interest.frequency_config">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-lg-2">Effective Rate: {{ interest.effective_rate_one }}  </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-1">India</div>
+                    <div class="col-lg-3">Interest Percentage : <input ng-change="interest.recalculate();"  type="text" ng-model="interest.percentage_two"/></div>
+                    <div class="col-lg-3">Type of Interest : 
+                        <input ng-change="interest.recalculate();"  type="radio" value="1" ng-model="interest.type_two"/> Simple
+                        <input ng-change="interest.recalculate();"  type="radio" value="2" ng-model="interest.type_two" checked="checked"/> Compound
+                    </div>
+                    <div class="col-lg-3" >
+                        <div ng-show="interest.type_two === '2'">Compound frequency : 
+                            <select  ng-change="interest.recalculate();" ng-model="interest.frequency_two" ng-options="f.value as f.name for f in interest.frequency_config">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-lg-2">Effective Rate: {{ interest.effective_rate_two }}  </div>
+                </div>
+
+
+                <div class="row">
+                    <div class="col-lg-6">Number of Years : <input type="text" ng-change="interest.recalculate();"   ng-model="interest.num_years"/></div>
+                    <div class="col-lg-6">Show me the values for : 
+                        <select ng-model="interest.out_frequency" ng-change="interest.recalculate();"  ng-options="f.value as f.name for f in interest.out_frequency_config">
+                        </select>
+                    </div>
+                </div>
+
+
+                <div class="row">
+                    <div class="col-lg-6">USD to INR: {{interest.current_USDINR}}</div>
+                    <div class="col-lg-6">INR to USD: {{interest.current_INRUSD}}</div>
+                </div>
+            
+            </div>
+            
+            <div class="interest_table">
+            
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">Period</th>
+                            <th>US Savings Account Value</th>
+                            <th colspan="10">India Fixed Deposit Value</th>
+                        </tr>
+                        <tr>
+                            <th>Balance</th>
+                            <th>Balance INR</th>
+                            <th>Balance USD +4</th>
+                            <th>Balance USD +3</th>
+                            <th>Balance USD +2</th>
+                            <th>Balance USD +1</th>
+                            <th>Balance USD Current</th>
+                            <th>Balance USD -1</th>
+                            <th>Balance USD -2</th>
+                            <th>Balance USD -3</th>
+                            <th>Balance USD -4</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="month in interest.months">
+                            <td>{{month}}</td>
+                            <td>{{ interest.getAmount("one",month) | currency }}</td>
+                            <td>{{ interest.getAmount("two",month)*interest.current_USDINR | currency }}</td>
+                            <td>{{ interest.getAmount("two",month)*interest.current_USDINR/(interest.current_USDINR+4) | currency}}</td>
+                            <td>{{ interest.getAmount("two",month)*interest.current_USDINR/(interest.current_USDINR+3) | currency}}</td>
+                            <td>{{ interest.getAmount("two",month)*interest.current_USDINR/(interest.current_USDINR+2) | currency}}</td>
+                            <td>{{ interest.getAmount("two",month)*interest.current_USDINR/(interest.current_USDINR+1) | currency}}</td>
+                            <td>{{ interest.getAmount("two",month)*interest.current_USDINR/interest.current_USDINR | currency}}</td>
+                            <td>{{ interest.getAmount("two",month)*interest.current_USDINR/(interest.current_USDINR-1) | currency}}</td>
+                            <td>{{ interest.getAmount("two",month)*interest.current_USDINR/(interest.current_USDINR-2) | currency}}</td>
+                            <td>{{ interest.getAmount("two",month)*interest.current_USDINR/(interest.current_USDINR-3) | currency}}</td>
+                            <td>{{ interest.getAmount("two",month)*interest.current_USDINR/(interest.current_USDINR-4) | currency}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            
+            </div>
+                
+            <div class="interest_chart">
+            <canvas id="line" class="chart chart-line" chart-data="data" chart-labels="labels" 
+    chart-legend="true" chart-series="series" chart-colours="colours" chart-click="onClick"></canvas> 
+                
+            </div>
+            
+        </div>
+    </body> 
+    
+</html>
